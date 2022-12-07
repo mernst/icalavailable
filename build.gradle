@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'application'
 
-  // To create a fat jar build/libs/icalavailable-all.jar, run: ./gradlew shadowJar
+  // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
   id 'com.github.johnrengelman.shadow' version '7.1.2'
 
   // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
@@ -25,7 +25,6 @@ dependencies {
   } else {
     implementation 'org.plumelib:options:2.0.2'
   }
-
   // https://mvnrepository.com/artifact/org.mnode.ical4j/ical4j
   implementation group: 'org.mnode.ical4j', name: 'ical4j', version: '2.0.0'
 
@@ -36,6 +35,9 @@ dependencies {
 application {
   mainClass = 'org.plumelib.icalavailable.ICalAvailable'
 }
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 test {
   useJUnitPlatform {
@@ -67,11 +69,31 @@ dependencies {
   errorprone("com.google.errorprone:error_prone_core:2.16")
 }
 tasks.withType(JavaCompile).configureEach {
+  // "-processing" avoids javac warning "No processor claimed any of these annotations".
   options.compilerArgs << "-Xlint:all,-processing" << "-Werror"
   options.errorprone {
     enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
     disable("ReferenceEquality") // Use Interning Checker instead.
   }
+}
+
+/// Checkstyle linter
+
+// Run by `gradle check`, which is run by `gradle build`
+
+apply plugin: 'checkstyle'
+
+ext.checkstyleVersion = '10.5.0'
+configurations {
+  checkstyleConfig
+}
+dependencies {
+  checkstyleConfig("com.puppycrawl.tools:checkstyle:${checkstyleVersion}") { transitive = false }
+}
+checkstyle {
+  toolVersion "${checkstyleVersion}"
+  config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+  ignoreFailures = false
 }
 
 /// Checker Framework pluggable type-checking
@@ -163,6 +185,14 @@ task requireJavadoc(type: JavaExec) {
 }
 check.dependsOn requireJavadoc
 javadocWeb.dependsOn requireJavadoc
+
+// Run by `gradle check`, which is run by `gradle build`
+apply plugin: 'checkstyle'
+checkstyle {
+  // toolVersion = "10.5.0"
+  ignoreFailures = false
+  // configFile = file("${project.rootDir}/checkstyle.xml")
+}
 
 task updateUserOptions(type: Javadoc, dependsOn: 'assemble') {
   description "Updates printed documentation of command-line arguments."
