@@ -168,7 +168,7 @@ public final class ICalAvailable {
   /// Procedures
 
   /**
-   * Reads command-line options and sets fields
+   * Reads command-line options and sets fields.
    *
    * @param args the command-line options
    */
