@@ -98,7 +98,7 @@ public final class ICalAvailable {
    * address".
    */
   @Option("<url> schedule in iCal format")
-  public static List<String> iCal_URL = new ArrayList<>();
+  public static List<String> icalUrl = new ArrayList<>();
 
   /** A list of time ranges, expressed as a String. Example: 9am-5pm,7:30pm-9:30pm */
   @Option("time ranges during which appointments are permitted")
@@ -179,13 +179,13 @@ public final class ICalAvailable {
   @EnsuresNonNull("tz1")
   static void processOptions(String[] args) {
     Options options = new Options("ICalAvailable [options]", ICalAvailable.class);
-    String[] remaining_args = options.parse(true, args);
-    if (remaining_args.length != 0) {
-      System.err.println("Unrecognized arguments: " + Arrays.toString(remaining_args));
+    String[] remainingArgs = options.parse(true, args);
+    if (remainingArgs.length != 0) {
+      System.err.println("Unrecognized arguments: " + Arrays.toString(remainingArgs));
       System.exit(1);
     }
-    if (iCal_URL.isEmpty()) {
-      System.err.println("Option iCal_URL must be specified.");
+    if (icalUrl.isEmpty()) {
+      System.err.println("Option --iCal-URL must be specified.");
       System.exit(1);
     }
 
@@ -227,9 +227,9 @@ public final class ICalAvailable {
     start_date.setTimeZone(tz1);
     start_date.setMinutes((start_date.getMinutes() / 15) * 15);
 
-    for (String URL : iCal_URL) {
+    for (String urlString : icalUrl) {
       try {
-        URL url = new URL(URL);
+        URL url = new URL(urlString);
         CalendarBuilder builder = new CalendarBuilder();
         Calendar c;
         try (InputStream urlStream = url.openStream()) {
@@ -240,7 +240,7 @@ public final class ICalAvailable {
               System.out.println();
               System.out.println("It is possible that the calendar has moved.");
               // Debugging: write the URL contents to standard output
-              URL url2 = new URL(URL);
+              URL url2 = new URL(urlString);
               try (InputStream url_is = url2.openStream()) {
                 System.out.printf("URL: %s%n", url2);
                 System.out.println("Contents:");
@@ -259,7 +259,7 @@ public final class ICalAvailable {
         calendars.add(c);
       } catch (Exception e) {
         e.printStackTrace(System.err);
-        System.err.println("Could not read calendar from " + URL);
+        System.err.println("Could not read calendar from " + urlString);
         System.exit(1);
       }
     }
@@ -280,6 +280,7 @@ public final class ICalAvailable {
   static Map<String, String> canonicalTimezones = new HashMap<>();
   /** Maps a long time zone name to a shorter one. */
   static Map<String, String> printedTimezones = new HashMap<>();
+
   // Yuck, this should really be a separate configuration file.
   static {
     canonicalTimezones.put("eastern", "America/New_York");
@@ -380,7 +381,7 @@ public final class ICalAvailable {
     System.out.println("timezone2: " + timezone2);
     System.out.println("start_date: " + start_date);
     System.out.println("days: " + days);
-    System.out.println("iCal_URL: " + iCal_URL);
+    System.out.println("icalUrl: " + icalUrl);
   }
 
   /**
@@ -590,10 +591,10 @@ public final class ICalAvailable {
       int year = new Date().getYear() + 1900;
       strDate = strDate + "/" + year;
     }
-    for (DateFormat this_df : dateFormats) {
-      this_df.setLenient(false);
+    for (DateFormat thisDf : dateFormats) {
+      thisDf.setLenient(false);
       try {
-        java.util.Date result = this_df.parse(strDate);
+        java.util.Date result = thisDf.parse(strDate);
         return result;
       } catch (ParseException e) {
         // Try the next format in the list.
